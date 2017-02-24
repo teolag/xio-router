@@ -5,35 +5,33 @@ const Router = (function() {
 	let activeRoute = null;
 	let catchAll = null;
 
-	class RouterView extends HTMLElement {
+	customElements.define('xio-view', class extends HTMLElement {
 
-		createdCallback() {
+		constructor() {
+			super();
 			if(!this.id) throw new Error("<xio-view> is missing required attribute 'id'");
 
 			views.push(this);
-			console.log("view created", this);
 			this.hide();
 		}
 
-		attachedCallback() {
-			console.log("view attached", this);
+		connectedCallback() {
+			// A new xio-view is now connected
 		}
 
-		detachedCallback() {
-			console.log("view deleted", this);
-
+		disconnectedCallback() {
+			// A xio-view is removed from the DOM
 		}
 
 		attributeChangedCallback(attrName, oldVal, newVal) {
-			console.log("view attribute changed", attrName, oldVal, newVal, this);
+			// The attribute <attrName> has changed from <oldVal> to <newVal>
 		}
 
 		get pattern () {
 			return this.getAttribute('pattern') || null;
 		}
 
-		in (params) {
-			console.log(this.id + " is now active", params);
+		activate (params) {
 			if(this.onLoadCallback) {
 				this.onLoadCallback(this, params);
 			} else {
@@ -41,12 +39,7 @@ const Router = (function() {
 			}
 		}
 
-		update (data) {
-			console.log("Update", data);
-		}
-
 		set onLoad(callback) {
-			console.log("set onload");
 			this.onLoadCallback = callback;
 		}
 
@@ -59,8 +52,8 @@ const Router = (function() {
 			//this.style.display = "none";
 			this.setAttribute("hidden","");
 		}
-	}
-	document.registerElement('xio-view', RouterView);
+	});
+	
 
 	
 	addEventListener("popstate", e => {
@@ -90,6 +83,8 @@ const Router = (function() {
 	}
 
 	const find = function() {
+		if(!views) return;
+
 		let matchingRoutes = [];
 		const url = location.pathname.substr(baseUrl.length);
 		views.forEach((route, index, array) => {
@@ -122,10 +117,9 @@ const Router = (function() {
 			return false;
 		} else {
 			const match = matchingRoutes[0];
-			console.log("MATCH!!", match);
 			if(activeRoute) activeRoute.hide(match.data);
 			activeRoute = match.route;
-			activeRoute.in(match.data);
+			activeRoute.activate(match.data);
 		}
 
 		
